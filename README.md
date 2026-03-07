@@ -21,6 +21,19 @@ This project conduct a comparative evaluation of multiple classifiers on [Titani
 2. Random Forest
 3. Gradient Boosting
 4. XGBoost
+    - Correct Rate: 0.8397129186602871
+        - Model Cnfigs
+            ```python
+            {
+                "objective": "binary:logistic",
+                "max_depth": 6,
+                "learning_rate": 0.01,
+                "subsample": 0.8,
+                "colsample": 0.8,
+                "n_estimators": 300,
+                "enable_categorical": True
+            }
+            ```
 5. Neural Network
 
 ## 📝 Learning Notes
