@@ -1,0 +1,125 @@
+# =========================
+# Python 基本
+# =========================
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# 虛擬環境
+venv/
+.venv/
+ENV/
+env/
+.conda/
+conda-env/
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+.pytest_cache/
+pytestdebug.log
+coverage.xml
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb~
+
+# =========================
+# LangChain / LLM / VectorStore
+# =========================
+
+# OpenAI / API keys / local configs
+.env
+*.env
+apikey.txt
+config.yaml
+settings.yaml
+
+# Chroma / FAISS / Vector DB files
+chroma/
+chroma_db/
+db/
+database/
+*.db
+*.sqlite
+*.sqlite3
+faiss_index/
+index.faiss
+index.pkl
+
+# LangChain cache
+lc_cache/
+cache/
+*.json
+*.yaml
+
+# Model downloads
+models/
+model_cache/
+
+# =========================
+# Editor / IDE
+# =========================
+
+# VSCode
+.vscode/
+.code-workspace
+
+# PyCharm
+.idea/
+
+# =========================
+# macOS / system files
+# =========================
+.DS_Store
+*.swp
+*.swo
+
+# Note files
+memo
+memo.*
+
+
+# secret data
+data/
+*.csv
+evaluation_results/
+
+# testing files
+*test.txt
+*test.py
+*test.ipynb
+*.zip
+*.ipynb
