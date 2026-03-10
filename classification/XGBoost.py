@@ -1,6 +1,6 @@
 
 """
-1. Test this class with `python -m models.XGBoost` in root
+1. Test this class with `python -m classification.XGBoost` in root
 
 2. XGBoost wants features to be one of these:
     - int
@@ -15,7 +15,7 @@ import xgboost as xgb
 from typing import Dict
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
-from data_cleaning import ColumnConfig, ClusteringDataCleaning
+from data_cleaning import ColumnConfig, DataCleaning
 
 class XGBoostModel:
     """
@@ -35,7 +35,7 @@ class XGBoostModel:
             "subsample": 0.8,
             "colsample": 0.8,
             "n_estimators": 300,
-            "enable_categorical": True
+            "enable_categorical": False
         }
 
     def _train_classification(
@@ -97,8 +97,8 @@ if __name__ == "__main__":
         ]
     )
 
-    titianic_training_cleaner = ClusteringDataCleaning(columns = titianic_training_config)
-    titianic_testing_cleaner = ClusteringDataCleaning(columns = titianic_testing_config)
+    titianic_training_cleaner = DataCleaning(columns = titianic_training_config)
+    titianic_testing_cleaner = DataCleaning(columns = titianic_testing_config)
 
     # ==================== Data Processing ====================
     train_df = pd.read_csv("titanic/train_cleaned.csv")

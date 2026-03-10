@@ -19,7 +19,7 @@ class ColumnConfig:
     bool_cols: List[str] = field(default_factory=list)
     category_cols: List[str] = field(default_factory=list)
 
-class ClusteringDataCleaning:
+class DataCleaning:
 
     def __init__(self, columns: Optional[ColumnConfig]):
         self.columns = columns

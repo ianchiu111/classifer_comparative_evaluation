@@ -19,21 +19,55 @@ This project conduct a comparative evaluation of multiple classifiers on [Titani
 ## 🔧 Classfier Practices
 1. SVM
 2. Random Forest
+    ```python
+    # model 1: Use dataset without categorical data.
+    ## data columns
+    "Survived": int
+    "Pclass": int
+    "Age": int
+    "SibSp": int
+    "Parch": int
+    "Fare": float
+
+    ## model configs
+    "n_estimators": 300,
+    "max_depth": 8,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "max_features": "sqrt",
+    "bootstrap": True,
+    "random_state": 42
+
+    ## performance
+    "Correct Rate": 0.6363
+    ```
+
 3. Gradient Boosting
 4. XGBoost
-    - Correct Rate: 0.8397129186602871
-        - Model Cnfigs
-            ```python
-            {
-                "objective": "binary:logistic",
-                "max_depth": 6,
-                "learning_rate": 0.01,
-                "subsample": 0.8,
-                "colsample": 0.8,
-                "n_estimators": 300,
-                "enable_categorical": True
-            }
-            ```
+    ```python
+    ## data columns
+    "Survived": int
+    "Pclass": int
+    "Age": int
+    "SibSp": int
+    "Parch": int
+    "Fare": float
+    "Sex": category
+    "Cabin": category
+    "Embarked": category
+
+    ## model configs
+    "objective": "binary:logistic",
+    "max_depth": 6,
+    "learning_rate": 0.01,
+    "subsample": 0.8,
+    "colsample": 0.8,
+    "n_estimators": 300,
+    "enable_categorical": True
+
+    ## performance
+    "Correct Rate": 0.8397
+    ```
 5. Neural Network
 
 ## 📝 Learning Notes
@@ -51,6 +85,18 @@ This project conduct a comparative evaluation of multiple classifiers on [Titani
     - **High Noise** in Training Data (rows)
         - High max_depth may cause **Overfitting**
     - **Inference time linearly increases** with the increase of n_estimators
+5. Scikit-learn python package is limited to categorical data type, there are some options to solve:
+        1. Stay with scikit-learn, but encode the categorical columns.
+        2. Some tree libraries natively support categorical features.
+
+6. Different approach testing
+    1. Use dataset without categorical data.
+        - outcomes: the correct rate decline than XGBoost.
+    2. Use dataset with categorical but encoded data.
+        - outcomes: We meet `Feature Mismatch` issue, due to encoding process. The unique values in a specific columns aren't same between training and testing 
+
+7. Useful Reading:
+    - [Random Forest, Explained: A Visual Guide with Code Examples](https://medium.com/data-science/random-forest-explained-a-visual-guide-with-code-examples-9f736a6e1b3c)
 
 ### Gradient Boosting
 > Famous person: Friedman
