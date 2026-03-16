@@ -15,7 +15,6 @@ This project conduct a comparative evaluation of multiple classifiers on [Titani
 |cabin | Cabin number | The cabin number assigned to the passenger, typically indicating the deck (letter) and room number. Many values are missing due to incomplete records.| 
 |embarked | Port of Embarkation | The port where the passenger boarded the Titanic: C = Cherbourg, Q = Queenstown, S = Southampton. |
 
-
 ## 🔧 Classfier Testing
 ### Testing Notes
 1. Use dataset with categorical but encoded data may cause error!

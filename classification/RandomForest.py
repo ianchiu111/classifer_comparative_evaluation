@@ -1,6 +1,5 @@
-
 """
-1. Test this class with `python -m classification.RandomForest` in root
+1. Test this class with `python3 -m classification.RandomForest` in root
 
 2. Random Forest wants features to be one of these:
     - int
@@ -21,16 +20,14 @@ from data_cleaning import ColumnConfig, DataCleaning
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
-class RandomForestModel:
-    """
-    Use dataset without categorical data.
-    """
-    
-    def __init__(self):
-        self.model_folder = "classification/models/"
-        os.makedirs(self.model_folder, exist_ok=True)
+class randomForest:
 
-        self.classification_params = {
+    def __init__(self):
+
+        self.MODEL_FOLDER      = "classification/models/"
+        self.PCA_RESULT_FOLDER = "classification/predict_results/"
+
+        self.RF_PARAMS = {
             "n_estimators": 300,
             "max_depth": 8,
             "min_samples_split": 5,
@@ -40,172 +37,171 @@ class RandomForestModel:
             "random_state": 42
         }
 
-    def _train_classification(
-            self, 
-            X_train: pd.DataFrame, 
-            X_test: pd.DataFrame,
-            y_train: pd.DataFrame,
-            y_test: pd.DataFrame,
-            config: Dict = None,
-            trained: bool = True
+        os.makedirs(self.MODEL_FOLDER, exist_ok=True)
+        os.makedirs(self.PCA_RESULT_FOLDER, exist_ok=True)
+
+    # ------------------------------------------------------------------ #
+    #  Private helpers                                                     #
+    # ------------------------------------------------------------------ #
+
+    def _get_model(self):
+        return RandomForestClassifier(**self.RF_PARAMS)
+
+    def _model_path(self) -> str:
+        return f"{self.MODEL_FOLDER}randomForest.pickle"
+
+    # ------------------------------------------------------------------ #
+    #  Main helpers                                                         #
+    # ------------------------------------------------------------------ #
+
+    def train(
+        self,
+        X_train : pd.DataFrame,
+        X_test  : pd.DataFrame,
+        y_train : pd.DataFrame,
+        y_test  : pd.DataFrame,
+        trained : bool = True
     ):
         """
-        Training an Random Forest classification model
+        Training an SVM classification model
         default trained = True: There's already a trained model, so don't need to train again.
         """
+        if trained:
+            print(f"[TRAIN] Skipping — loading existing model from {self._model_path()}")
+            return
 
-        if trained == True:
-            pass 
-        else: 
-            # train classification model
-            if config is None:
-                config = self.classification_params
+        model = self._get_model()
+        model.fit(X_train, y_train)
 
-            # set model config and train with fit function
-            model = RandomForestClassifier(**config)
-            model = model.fit(X_train, y_train)
+        report = classification_report(y_test, model.predict(X_test))
+        print("TRAIN] Classification Report:\n", report)
 
-            results = model.predict(X_test)
-            report = classification_report(y_test, results)
-            print("report:", report)
+        with open(self._model_path(), "wb") as f:
+            pickle.dump(model, f)
+        print(f"[TRAIN] Model saved to {self._model_path()}")
 
-            # Save trained model
-            with open( self.model_folder + 'randomforest-classification.pickle', 'wb') as f:
-                pickle.dump(model, f)
+    def load(self):
+        """ Load and return the persisted model. """
+        try:
+            with open(self._model_path(), "rb") as f:
+                return pickle.load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"[LOAD] Model not found at {self._model_path()}. Please train the model first."
+            )
 
-    def _visualize_pca(
-            self,
-            X: pd.DataFrame,
-            predictions: np.ndarray,
-            save_path: str,
-            title: str
-    ):
+    def evaluate(self, model, test_df: pd.DataFrame, cleaned_test_df: pd.DataFrame, answers: pd.DataFrame):
         """
-        Visualize classification results using PCA (2D projection).
+        Run predictions and return correct rate.
+        test_df        — raw dataframe, used to get PassengerId
+        cleaned_test_df — cleaned features, used for prediction
         """
+        # use reset_index to make sure two df have same index
+        test_df         = test_df.reset_index(drop=True)
+        cleaned_test_df = cleaned_test_df.reset_index(drop=True)
+        predictions = model.predict(cleaned_test_df)
 
-        pca = PCA(n_components=2)
+        results = pd.DataFrame({
+            "PassengerId": test_df["PassengerId"],
+            "Predicted"  : predictions
+        })
+
+        comparison = results.merge(answers, on="PassengerId", how="inner")
+
+        comparison["check"] = np.where(
+            comparison["Predicted"] == comparison["Survived"],
+            "correct",
+            "wrong"
+        )
+
+        counts  = comparison["check"].value_counts()
+        correct = counts["correct"]
+        wrong   = counts["wrong"]
+        score   = correct / (correct + wrong)
+
+        print("[EVALUATE] Correct Rate:", score)
+        return predictions, score
+    
+
+    def visualize_pca(self, X: pd.DataFrame, predictions: np.ndarray):
+        """
+        Project features to 2D with PCA and plot predicted classes.
+        """
+        pca   = PCA(n_components=2)
         X_pca = pca.fit_transform(X)
 
-        label_map = {1: "Survived", 0: "Not Survived"}
-        colors    = {1: "steelblue", 0: "tomato"}
+        label_map = {1: "Survived",   0: "Not Survived"}
+        colors    = {1: "steelblue",  0: "tomato"}
 
         plt.figure(figsize=(8, 6))
-
         for label in [0, 1]:
             mask = predictions == label
             plt.scatter(
-                X_pca[mask, 0],
-                X_pca[mask, 1],
-                c=colors[label],
-                label=label_map[label],
-                alpha=0.6,
-                edgecolors='white',
-                linewidths=0.5
+                X_pca[mask, 0], X_pca[mask, 1],
+                c=colors[label], label=label_map[label],
+                alpha=0.6, edgecolors="white", linewidths=0.5
             )
 
-        plt.title(title)
+        plt.title(f"PCA — Random Forest Predicted Classification")
         plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}% variance)")
         plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}% variance)")
         plt.legend()
         plt.tight_layout()
+
+        save_path = f"{self.PCA_RESULT_FOLDER}pca_randomForest.png"
         plt.savefig(save_path, dpi=150)
-        print(f"PCA plot saved to: {save_path}")
+        print(f"[VISUALIZE] Plot saved to {save_path}")
+
 
 if __name__ == "__main__":
 
-    # ==================== Initiate Class ====================
-    rfmodel = RandomForestModel() 
-    titianic_training_config = ColumnConfig(
-        int_cols = [
-            "Survived", "Pclass", "Age", "SibSp", "Parch"
-        ],
-        float_cols = [
-            "Fare"
-        ],
-        # category_cols = [
-        #     "Sex", "Embarked"
-        # ]
+    # ------------------------------------------------------------------ #
+    #  Config                                                              #
+    # ------------------------------------------------------------------ #
+    TRAIN_CONFIG = ColumnConfig(
+        int_cols   = ["Survived", "Pclass", "Age", "SibSp", "Parch"],
+        float_cols = ["Fare"]
     )
-    titianic_testing_config = ColumnConfig(
-        int_cols = [
-            "Pclass", "Age", "SibSp", "Parch"
-        ],
-        float_cols = [
-            "Fare"
-        ],
-        # category_cols = [
-        #     "Sex", "Embarked"
-        # ]
+    TEST_CONFIG = ColumnConfig(
+        int_cols   = ["Pclass", "Age", "SibSp", "Parch"],
+        float_cols = ["Fare"]
     )
 
-    titianic_training_cleaner = DataCleaning(columns = titianic_training_config)
-    titianic_testing_cleaner = DataCleaning(columns = titianic_testing_config)
+    # ------------------------------------------------------------------ #
+    #  Data                                                                #
+    # ------------------------------------------------------------------ #
+    train_df         = pd.read_csv("titanic/train_cleaned.csv")
+    cleaned_train_df = DataCleaning(columns=TRAIN_CONFIG).clean_data(train_df)
+    answers          = pd.read_csv("titanic/gender_submission.csv")
 
-    # ==================== Data Processing ====================
-    train_df = pd.read_csv("titanic/train_cleaned.csv")
-    cleaned_train_df = titianic_training_cleaner.clean_data(data = train_df)
-    answers = pd.read_csv("titanic/gender_submission.csv")
-
-    y = cleaned_train_df['Survived']
-    X = cleaned_train_df.drop(columns=['Survived'])
+    y = cleaned_train_df["Survived"]
+    X = cleaned_train_df.drop(columns=["Survived"])
 
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
-    X_test, X_valid, y_test, y_valid = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+    X_test,  X_valid, y_test, y_valid = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
+    test_df         = pd.read_csv("titanic/test_cleaned.csv")
+    cleaned_test_df = DataCleaning(columns=TEST_CONFIG).clean_data(test_df)
 
-    # ==================== Training Model ====================
-    rfmodel._train_classification(
-        X_train, 
-        X_test,
-        y_train, 
-        y_test, 
-        trained = False
-    )
+    # ------------------------------------------------------------------ #
+    #  Train / Evaluate / Visualize                                         #
+    # ------------------------------------------------------------------ #
+    rfmodel = randomForest()
 
-    # ==================== Test Model ====================
     try:
-        with open('classification/models/randomforest-classification.pickle', 'rb') as f:
-            model = pickle.load(f)
-
-    except FileNotFoundError:
-        print("Model not found. Please train the model first.")
-
-    test_df = pd.read_csv("titanic/test_cleaned.csv")
-    cleaned_test_df = titianic_testing_cleaner.clean_data(data = test_df)
-
-    predictions = model.predict(cleaned_test_df)
-
-    results = pd.DataFrame({
-        "PassengerId": test_df["PassengerId"],
-        "Predicted": predictions
-    })
-
-    comparison = results.merge(
-        answers,
-        on="PassengerId",
-        how="inner"
-    )
-
-    # np.where(condition, value_if_true, value_if_false)
-    comparison["check"] = np.where(
-        comparison["Predicted"] == comparison["Survived"],
-        "correct",
-        "wrong"
-    )
-
-    counts = comparison["check"].value_counts()
-    correct = counts["correct"]
-    wrong = counts["wrong"]
-    score = correct/(correct+wrong)
-
-    print("Correct Rate:", score)
-
-    os.makedirs("classification/predict_results/", exist_ok=True)
-
-    rfmodel._visualize_pca(
-        X = cleaned_test_df, 
-        predictions = predictions,
-        save_path = "classification/predict_results/pca_visualization_randomForest.png",
-        title = "PCA - Random Forest Predicted Classification (Test Set)"
-    )
+        rfmodel.train(X_train, X_test, y_train, y_test, trained=False)
+        try: 
+            model = rfmodel.load()
+            try:
+                predictions, score = rfmodel.evaluate(model, test_df, cleaned_test_df, answers)
+                try:
+                    rfmodel.visualize_pca(cleaned_test_df, predictions) 
+                except Exception as e:
+                    print(f"[VISUALIZE] Failed: {e}")
+            except Exception as e:
+                print(f"[EVALUATE] Failed: {e}")
+        except FileNotFoundError as e:
+            print(f"[LOAD] Failed: {e}")
+    except Exception as e:
+        print(f"[TRAIN] Failed: {e}")
+        

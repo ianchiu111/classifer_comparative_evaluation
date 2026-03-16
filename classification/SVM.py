@@ -1,12 +1,13 @@
-
 """
-1. Test this class with `python -m classification.SVM` in root
+1. Test this class with `python3 -m classification.SVM` in root.
+2. Train to model with different configs in one class by `mode` param.
+    - 'linear': Linear SVM
+    - 'poly': Non-Linear SVM (polinomial as kernel function)
 """
 import os
 import numpy as np
 import pandas as pd
 import pickle
-from typing import Dict
 from sklearn import svm
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
@@ -15,373 +16,201 @@ from data_cleaning import ColumnConfig, DataCleaning
 from sklearn.decomposition import PCA
 import matplotlib.pyplot as plt
 
-# class SVM_1:
-#     """
-#     Linear function
-#     """
-    
-#     def __init__(self):
-#         self.model_folder = "classification/models/"
-#         os.makedirs(self.model_folder, exist_ok=True)
-
-#         self.classification_params = {
-#             "C" : 1, 
-#             "max_iter" : 10000
-#         }
-
-#     def _train_classification(
-#             self, 
-#             X_train: pd.DataFrame, 
-#             X_test: pd.DataFrame,
-#             y_train: pd.DataFrame,
-#             y_test: pd.DataFrame,
-#             config: Dict = None,
-#             trained: bool = False
-#     ):
-#         """
-#         Training an SVM classification model
-#         default trained = True: There's already a trained model, so don't need to train again.
-#         """
-
-#         if trained == True:
-#             pass 
-#         else: 
-#             # train classification model
-#             if config is None:
-#                 config = self.classification_params
-            
-#             # set model config and train with fit function
-#             model = svm.LinearSVC(**config)
-#             model = model.fit(X_train, y_train)
-            
-#             # 使用訓練資料預測分類
-#             results = model.predict(X_test)
-#             report = classification_report(y_test, results)
-#             print("report:", report)
-
-#             with open( self.model_folder + 'svm-classification-1.pickle', 'wb') as f:
-#                 pickle.dump(model, f)
-
-#     def _visualize_pca(
-#             self,
-#             X: pd.DataFrame,
-#             predictions: np.ndarray,
-#             save_path: str,
-#             title: str
-#     ):
-#         """
-#         Visualize classification results using PCA (2D projection).
-#         """
-#         pca = PCA(n_components=2)
-#         X_pca = pca.fit_transform(X)
-
-#         label_map = {1: "Survived", 0: "Not Survived"}
-#         colors    = {1: "steelblue", 0: "tomato"}
-
-#         plt.figure(figsize=(8, 6))
-
-#         for label in [0, 1]:
-#             mask = predictions == label
-#             plt.scatter(
-#                 X_pca[mask, 0],
-#                 X_pca[mask, 1],
-#                 c=colors[label],
-#                 label=label_map[label],
-#                 alpha=0.6,
-#                 edgecolors='white',
-#                 linewidths=0.5
-#             )
-
-#         plt.title(title)
-#         plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}% variance)")
-#         plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}% variance)")
-#         plt.legend()
-#         plt.tight_layout()
-#         plt.savefig(save_path, dpi=150)
-#         print(f"PCA plot saved to: {save_path}")
-
-# if __name__ == "__main__":
-
-#     # ==================== Initiate Class ====================
-#     svmmodel = SVM_1()
-#     titianic_training_config = ColumnConfig(
-#         int_cols = [
-#             "Survived", "Pclass", "Age", "SibSp", "Parch"
-#         ],
-#         float_cols = [
-#             "Fare"
-#         ],
-#         # category_cols = [
-#         #     "Sex", "Embarked"
-#         # ]
-#     )
-#     titianic_testing_config = ColumnConfig(
-#         int_cols = [
-#             "Pclass", "Age", "SibSp", "Parch"
-#         ],
-#         float_cols = [
-#             "Fare"
-#         ],
-#         # category_cols = [
-#         #     "Sex", "Embarked"
-#         # ]
-#     )
-
-#     titianic_training_cleaner = DataCleaning(columns = titianic_training_config)
-#     titianic_testing_cleaner = DataCleaning(columns = titianic_testing_config)
-
-#     # ==================== Data Processing ====================
-#     train_df = pd.read_csv("titanic/train_cleaned.csv")
-#     cleaned_train_df = titianic_training_cleaner.clean_data(data = train_df)
-#     answers = pd.read_csv("titanic/gender_submission.csv")
-
-#     y = cleaned_train_df['Survived']
-#     X = cleaned_train_df.drop(columns=['Survived'])
-
-#     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
-#     X_test, X_valid, y_test, y_valid = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
-
-
-#     # ==================== Training Model ====================
-#     svmmodel._train_classification(
-#         X_train, 
-#         X_test,
-#         y_train, 
-#         y_test, 
-#         trained = False
-#     )
-
-#     # ==================== Test Model ====================
-#     try: 
-#         with open('classification/models/svm-classification-1.pickle', 'rb') as f:
-#             model = pickle.load(f)
-
-#     except FileNotFoundError:
-#         print("Model not found. Please train the model first.")
-
-#     test_df = pd.read_csv("titanic/test_cleaned.csv")
-#     cleaned_test_df = titianic_testing_cleaner.clean_data(data = test_df)
-
-#     predictions = model.predict(cleaned_test_df)
-
-#     results = pd.DataFrame({
-#         "PassengerId": test_df["PassengerId"],
-#         "Predicted": predictions
-#     })
-
-#     comparison = results.merge(
-#         answers,
-#         on="PassengerId",
-#         how="inner"
-#     )
-
-#     # np.where(condition, value_if_true, value_if_false)
-#     comparison["check"] = np.where(
-#         comparison["Predicted"] == comparison["Survived"],
-#         "correct",
-#         "wrong"
-#     )
-
-#     counts = comparison["check"].value_counts()
-#     correct = counts["correct"]
-#     wrong = counts["wrong"]
-#     score = correct/(correct+wrong)
-
-#     print("Correct Rate:", score)
-
-#     os.makedirs("classification/predict_results/", exist_ok=True)
-
-#     svmmodel._visualize_pca(
-#         X = cleaned_test_df, 
-#         predictions = predictions,
-#         save_path = "classification/predict_results/pca_visualization_svm_1.png",
-#         title = "PCA - SVM Predicted Classification (Test Set)"
-#     )
-
-class SVM_2:
+class SVM:
     """
-    Non-Linear function
+    SVM classification model supporting both Linear and Non-Linear kernels.
+    - mode = 'linear' : uses LinearSVC
+    - mode = 'poly'   : uses SVC with polynomial kernel
     """
-    
-    def __init__(self):
-        self.model_folder = "classification/models/"
-        os.makedirs(self.model_folder, exist_ok=True)
 
-        self.classification_params = {
-            "kernel": 'poly', 
-            "degree": 3, 
-            "gamma": 'auto',
-            "C": 1
+    def __init__(self, mode: str = "poly"):
+        assert mode in ("linear", "poly"), "mode must be 'linear' or 'poly'"
+        self.mode = mode
+
+        self.MODEL_FOLDER      = "classification/models/"
+        self.PCA_RESULT_FOLDER = "classification/predict_results/"
+
+        self.LINEAR_PARAMS = {
+            "C"        : 1,
+            "max_iter" : 10000
+        }
+        self.POLY_PARAMS = {
+            "kernel" : "poly",
+            "degree" : 3,
+            "gamma"  : "auto",
+            "C"      : 1
         }
 
-    def _train_classification(
-            self, 
-            X_train: pd.DataFrame, 
-            X_test: pd.DataFrame,
-            y_train: pd.DataFrame,
-            y_test: pd.DataFrame,
-            config: Dict = None,
-            trained: bool = False
+        os.makedirs(self.MODEL_FOLDER, exist_ok=True)
+        os.makedirs(self.PCA_RESULT_FOLDER, exist_ok=True)
+
+    # ------------------------------------------------------------------ #
+    #  Private helpers                                                     #
+    # ------------------------------------------------------------------ #
+
+    def _get_model(self):
+        """ Return an unfitted estimator based on self.mode. """
+        if self.mode == "linear":
+            return svm.LinearSVC(**self.LINEAR_PARAMS)
+        return svm.SVC(**self.POLY_PARAMS)
+
+    def _model_path(self) -> str:
+        return f"{self.MODEL_FOLDER}svm-{self.mode}.pickle"
+
+    # ------------------------------------------------------------------ #
+    #  Main helpers                                                         #
+    # ------------------------------------------------------------------ #
+
+    def train(
+        self,
+        X_train : pd.DataFrame,
+        X_test  : pd.DataFrame,
+        y_train : pd.DataFrame,
+        y_test  : pd.DataFrame,
+        trained : bool = True
     ):
         """
         Training an SVM classification model
         default trained = True: There's already a trained model, so don't need to train again.
         """
+        if trained:
+            print(f"[TRAIN] Skipping — loading existing model from {self._model_path()}")
+            return
 
-        if trained == True:
-            pass 
-        else: 
-            # train classification model
-            if config is None:
-                config = self.classification_params
-            
-            # set model config and train with fit function
-            model = svm.SVC(**config)
-            model = model.fit(X_train, y_train)
-            
-            # 使用訓練資料預測分類
-            results = model.predict(X_test)
-            report = classification_report(y_test, results)
-            print("report:", report)
+        model = self._get_model()
+        model.fit(X_train, y_train)
 
-            with open(self.model_folder + 'svm-classification-2.pickle', 'wb') as f:
-                pickle.dump(model, f)
+        report = classification_report(y_test, model.predict(X_test))
+        print("TRAIN] Classification Report:\n", report)
 
-    def _visualize_pca(
-            self,
-            X: pd.DataFrame,
-            predictions: np.ndarray,
-            save_path: str,
-            title: str
-    ):
+        with open(self._model_path(), "wb") as f:
+            pickle.dump(model, f)
+        print(f"[TRAIN] Model saved to {self._model_path()}")
+
+    def load(self):
+        """ Load and return the persisted model. """
+        try:
+            with open(self._model_path(), "rb") as f:
+                return pickle.load(f)
+        except FileNotFoundError:
+            raise FileNotFoundError(
+                f"[LOAD] Model not found at {self._model_path()}. Please train the model first."
+            )
+
+    def evaluate(self, model, test_df: pd.DataFrame, cleaned_test_df: pd.DataFrame, answers: pd.DataFrame):
         """
-        Visualize classification results using PCA (2D projection).
+        Run predictions and return correct rate.
+        test_df        — raw dataframe, used to get PassengerId
+        cleaned_test_df — cleaned features, used for prediction
         """
-        pca = PCA(n_components=2)
+        # use reset_index to make sure two df have same index
+        test_df         = test_df.reset_index(drop=True)
+        cleaned_test_df = cleaned_test_df.reset_index(drop=True)
+        predictions = model.predict(cleaned_test_df)
+
+        results = pd.DataFrame({
+            "PassengerId": test_df["PassengerId"],
+            "Predicted"  : predictions
+        })
+
+        comparison = results.merge(answers, on="PassengerId", how="inner")
+
+        comparison["check"] = np.where(
+            comparison["Predicted"] == comparison["Survived"],
+            "correct",
+            "wrong"
+        )
+
+        counts  = comparison["check"].value_counts()
+        correct = counts["correct"]
+        wrong   = counts["wrong"]
+        score   = correct / (correct + wrong)
+
+        print("[EVALUATE] Correct Rate:", score)
+        return predictions, score
+    
+
+    def visualize_pca(self, X: pd.DataFrame, predictions: np.ndarray):
+        """
+        Project features to 2D with PCA and plot predicted classes.
+        """
+        pca   = PCA(n_components=2)
         X_pca = pca.fit_transform(X)
 
-        label_map = {1: "Survived", 0: "Not Survived"}
-        colors    = {1: "steelblue", 0: "tomato"}
+        label_map = {1: "Survived",   0: "Not Survived"}
+        colors    = {1: "steelblue",  0: "tomato"}
 
         plt.figure(figsize=(8, 6))
-
         for label in [0, 1]:
             mask = predictions == label
             plt.scatter(
-                X_pca[mask, 0],
-                X_pca[mask, 1],
-                c=colors[label],
-                label=label_map[label],
-                alpha=0.6,
-                edgecolors='white',
-                linewidths=0.5
+                X_pca[mask, 0], X_pca[mask, 1],
+                c=colors[label], label=label_map[label],
+                alpha=0.6, edgecolors="white", linewidths=0.5
             )
 
-        plt.title(title)
+        plt.title(f"PCA — SVM ({self.mode}) Predicted Classification")
         plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}% variance)")
         plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}% variance)")
         plt.legend()
         plt.tight_layout()
+
+        save_path = f"{self.PCA_RESULT_FOLDER}pca_svm_{self.mode}.png"
         plt.savefig(save_path, dpi=150)
-        print(f"PCA plot saved to: {save_path}")
+        print(f"[VISUALIZE] Plot saved to {save_path}")
+
 
 if __name__ == "__main__":
 
-    # ==================== Initiate Class ====================
-    svmmodel = SVM_2()
-    titianic_training_config = ColumnConfig(
-        int_cols = [
-            "Survived", "Pclass", "Age", "SibSp", "Parch"
-        ],
-        float_cols = [
-            "Fare"
-        ],
-        # category_cols = [
-        #     "Sex", "Embarked"
-        # ]
+    # ------------------------------------------------------------------ #
+    #  Config                                                              #
+    # ------------------------------------------------------------------ #
+    TRAIN_CONFIG = ColumnConfig(
+        int_cols   = ["Survived", "Pclass", "Age", "SibSp", "Parch"],
+        float_cols = ["Fare"]
     )
-    titianic_testing_config = ColumnConfig(
-        int_cols = [
-            "Pclass", "Age", "SibSp", "Parch"
-        ],
-        float_cols = [
-            "Fare"
-        ],
-        # category_cols = [
-        #     "Sex", "Embarked"
-        # ]
+    TEST_CONFIG = ColumnConfig(
+        int_cols   = ["Pclass", "Age", "SibSp", "Parch"],
+        float_cols = ["Fare"]
     )
 
-    titianic_training_cleaner = DataCleaning(columns = titianic_training_config)
-    titianic_testing_cleaner = DataCleaning(columns = titianic_testing_config)
+    # ------------------------------------------------------------------ #
+    #  Data                                                                #
+    # ------------------------------------------------------------------ #
+    train_df         = pd.read_csv("titanic/train_cleaned.csv")
+    cleaned_train_df = DataCleaning(columns=TRAIN_CONFIG).clean_data(train_df)
+    answers          = pd.read_csv("titanic/gender_submission.csv")
 
-    # ==================== Data Processing ====================
-    train_df = pd.read_csv("titanic/train_cleaned.csv")
-    cleaned_train_df = titianic_training_cleaner.clean_data(data = train_df)
-    answers = pd.read_csv("titanic/gender_submission.csv")
-
-    y = cleaned_train_df['Survived']
-    X = cleaned_train_df.drop(columns=['Survived'])
+    y = cleaned_train_df["Survived"]
+    X = cleaned_train_df.drop(columns=["Survived"])
 
     X_train, X_temp, y_train, y_temp = train_test_split(X, y, test_size=0.3, random_state=42)
-    X_test, X_valid, y_test, y_valid = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+    X_test,  X_valid, y_test, y_valid = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
 
+    test_df         = pd.read_csv("titanic/test_cleaned.csv")
+    cleaned_test_df = DataCleaning(columns=TEST_CONFIG).clean_data(test_df)
 
-    # ==================== Training Model ====================
-    svmmodel._train_classification(
-        X_train, 
-        X_test,
-        y_train, 
-        y_test, 
-        trained = False
-    )
+    # ------------------------------------------------------------------ #
+    #  Train / Evaluate / Visualize                                         #
+    # ------------------------------------------------------------------ #
+    for mode in ("linear", "poly"):
+        print(f"\n{'='*50}\n  Mode: {mode}\n{'='*50}")
+        svmmodel = SVM(mode=mode)
 
-    # ==================== Test Model ====================
-    try: 
-        with open('classification/models/svm-classification-2.pickle', 'rb') as f:
-            model = pickle.load(f)
-
-    except FileNotFoundError:
-        print("Model not found. Please train the model first.")
-
-    test_df = pd.read_csv("titanic/test_cleaned.csv")
-    cleaned_test_df = titianic_testing_cleaner.clean_data(data = test_df)
-
-    predictions = model.predict(cleaned_test_df)
-
-    results = pd.DataFrame({
-        "PassengerId": test_df["PassengerId"],
-        "Predicted": predictions
-    })
-
-    comparison = results.merge(
-        answers,
-        on="PassengerId",
-        how="inner"
-    )
-
-    # np.where(condition, value_if_true, value_if_false)
-    comparison["check"] = np.where(
-        comparison["Predicted"] == comparison["Survived"],
-        "correct",
-        "wrong"
-    )
-
-    counts = comparison["check"].value_counts()
-    correct = counts["correct"]
-    wrong = counts["wrong"]
-    score = correct/(correct+wrong)
-
-    print("Correct Rate:", score)
-
-    os.makedirs("classification/predict_results/", exist_ok=True)
-
-    svmmodel._visualize_pca(
-        X = cleaned_test_df, 
-        predictions = predictions,
-        save_path = "classification/predict_results/pca_visualization_svm_2.png",
-        title = "PCA - SVM Predicted Classification (Test Set)"
-    )
-
-
-
+        try:
+            svmmodel.train(X_train, X_test, y_train, y_test, trained=False)
+            try: 
+                model = svmmodel.load()
+                try:
+                    predictions, score = svmmodel.evaluate(model, test_df, cleaned_test_df, answers)
+                    try:
+                        svmmodel.visualize_pca(cleaned_test_df, predictions) 
+                    except Exception as e:
+                        print(f"[VISUALIZE] Failed: {e}")
+                except Exception as e:
+                    print(f"[EVALUATE] Failed: {e}")
+            except FileNotFoundError as e:
+                print(f"[LOAD] Failed: {e}")
+        except Exception as e:
+            print(f"[TRAIN] Failed: {e}")
+        
