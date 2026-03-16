@@ -18,7 +18,12 @@ This project conduct a comparative evaluation of multiple classifiers on [Titani
 
 ## 🔧 Classfier Testing
 ### Testing Notes
-1. When I remove the Nan value in testing dataset, the Correct Rate of models all decrease a little bit. 
+1. Use dataset with categorical but encoded data may cause error!
+    - ⚠️ If the unique values in a specific categorical columns are not same between training and testing dataset. It will cause **Feature Mismatch issue**
+2. When I remove the Nan value in testing dataset, the Correct Rate of models all decrease a little bit. 
+3. PCA visualization is unavailable for categorical data, due to no numeric distance meaning.
+    - Available: SVM, Random Forest
+    - Unavailable: XGBoost
 
 ### Testing Results
 1. SVM

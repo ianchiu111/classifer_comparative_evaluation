@@ -8,6 +8,7 @@
     - bool
     - category
 """
+import os
 import numpy as np
 import pandas as pd
 import pickle
@@ -16,7 +17,6 @@ from typing import Dict
 from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from data_cleaning import ColumnConfig, DataCleaning
-
 
 class XGBoostModel:
     """
@@ -29,6 +29,9 @@ class XGBoostModel:
     """
     
     def __init__(self):
+        self.model_folder = "classification/models/"
+        os.makedirs(self.model_folder, exist_ok=True)
+
         self.classification_params = {
             "objective": "binary:logistic",
             "max_depth": 6,
@@ -68,7 +71,7 @@ class XGBoostModel:
             report = classification_report(y_test, results)
             print("report:", report)
 
-            with open('classification/models/xgboost-classification.pickle', 'wb') as f:
+            with open(self.model_folder + 'xgboost-classification.pickle', 'wb') as f:
                 pickle.dump(model, f)
 
 if __name__ == "__main__":
