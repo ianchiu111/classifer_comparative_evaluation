@@ -114,7 +114,6 @@ memo.*
 
 # secret data
 data/
-*.csv
 evaluation_results/
 
 # testing files
