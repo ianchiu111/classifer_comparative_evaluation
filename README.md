@@ -16,11 +16,53 @@ This project conduct a comparative evaluation of multiple classifiers on [Titani
 |embarked | Port of Embarkation | The port where the passenger boarded the Titanic: C = Cherbourg, Q = Queenstown, S = Southampton. |
 
 
-## 🔧 Classfier Practices
+## 🔧 Classfier Testing
+### Testing Notes
+1. When I remove the Nan value in testing dataset, the Correct Rate of models all decrease a little bit. 
+
+### Testing Results
 1. SVM
+    ```python
+    ## data columns
+    "Survived": int
+    "Pclass": int
+    "Age": int
+    "SibSp": int
+    "Parch": int
+    "Fare": float
+
+    ## model configs
+    ### config explanations
+    1. C: limitation of model complexity, to avoid over-fitting
+    2. kernel: kernel function used in non-linear model
+        - ploy
+        - rbf
+    3. degree: indicates the height of a dimension.
+    4. gamma: The larger the value, the more complex the classification boundary can be.
+        - auto
+        - 0.7
+    
+    ### Linear model(model 1)
+    "C" : 1, 
+    "max_iter" : 10000
+    ### Non-Linear model (model 2)
+    "kernel": 'poly', 
+    "degree": 3, 
+    "gamma": 'auto',
+    "C": 1
+
+    ## performance
+    ### 1st time 
+    > remove "Cabin" column
+    > remove Nan value in "Age" & "Fare" column in test dataset
+    #### model 1
+    "Correct Rate": 0.6072
+    #### model 2 
+    "Correct Rate": 0.5589
+    ```
+
 2. Random Forest
     ```python
-    # model 1: Use dataset without categorical data.
     ## data columns
     "Survived": int
     "Pclass": int
@@ -39,7 +81,12 @@ This project conduct a comparative evaluation of multiple classifiers on [Titani
     "random_state": 42
 
     ## performance
+    ### 1st time
     "Correct Rate": 0.6363
+    ### 2nd time
+    > remove "Cabin" column
+    > remove Nan value in "Age" & "Fare" column in test dataset
+    "Correct Rate": 0.6253
     ```
 
 3. Gradient Boosting
@@ -66,12 +113,25 @@ This project conduct a comparative evaluation of multiple classifiers on [Titani
     "enable_categorical": True
 
     ## performance
+    ### 1 st time
     "Correct Rate": 0.8397
+    ### 2nd time
+    > remove "Cabin" column
+    > remove Nan value in "Age" & "Fare" column in test dataset
+    "Correct Rate": 0.8368
     ```
 5. Neural Network
 
 ## 📝 Learning Notes
 ### SVM
+1. Reference Reading
+    - [Support Vector Machine](https://ithelp.ithome.com.tw/m/articles/10270447)
+2. Two types of SVM
+    - Linear SVM
+    - Non-Linear SVM: Use **kernel function** to map the data to a high-dimensional space and do seperate. 
+        - Polynomial 
+        - Radial Basis Function
+
 ### Random Forest
 1. Concepts: Randomly select features as if-then filters. 
 2. Tree Construction: Bootstrap Bagging

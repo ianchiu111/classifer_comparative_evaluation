@@ -17,6 +17,7 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from data_cleaning import ColumnConfig, DataCleaning
 
+
 class XGBoostModel:
     """
     1. XGBoost is a gradient-boosted decision tree algorithm used for supervised learning.
@@ -35,7 +36,7 @@ class XGBoostModel:
             "subsample": 0.8,
             "colsample": 0.8,
             "n_estimators": 300,
-            "enable_categorical": False
+            "enable_categorical": True
         }
 
     def _train_classification(
@@ -82,7 +83,7 @@ if __name__ == "__main__":
             "Fare"
         ],
         category_cols = [
-            "Sex", "Cabin", "Embarked"
+            "Sex", "Embarked"
         ]
     )
     titianic_testing_config = ColumnConfig(
@@ -93,7 +94,7 @@ if __name__ == "__main__":
             "Fare"
         ],
         category_cols = [
-            "Sex", "Cabin", "Embarked"
+            "Sex", "Embarked"
         ]
     )
 
@@ -118,7 +119,7 @@ if __name__ == "__main__":
         X_test,
         y_train, 
         y_test, 
-        trained = True
+        trained = False
     )
 
     # ==================== Test Model ====================
@@ -129,7 +130,7 @@ if __name__ == "__main__":
     except FileNotFoundError:
         print("Model not found. Please train the model first.")
 
-    test_df = pd.read_csv("titanic/test.csv")
+    test_df = pd.read_csv("titanic/test_cleaned.csv")
     cleaned_test_df = titianic_testing_cleaner.clean_data(data = test_df)
 
     predictions = model.predict(cleaned_test_df)

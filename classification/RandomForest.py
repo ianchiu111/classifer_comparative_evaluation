@@ -17,6 +17,9 @@ from sklearn.metrics import classification_report
 from sklearn.model_selection import train_test_split
 from data_cleaning import ColumnConfig, DataCleaning
 
+from sklearn.decomposition import PCA
+import matplotlib.pyplot as plt
+
 class RandomForestModel_1:
     """
     Use dataset without categorical data.
@@ -66,6 +69,44 @@ class RandomForestModel_1:
             with open('classification/models/randomforest-classification-1.pickle', 'wb') as f:
                 pickle.dump(model, f)
 
+    def _visualize_pca(
+            self,
+            X: pd.DataFrame,
+            predictions: np.ndarray,
+            save_path: str,
+            title: str
+    ):
+        """
+        Visualize classification results using PCA (2D projection).
+        """
+
+        pca = PCA(n_components=2)
+        X_pca = pca.fit_transform(X)
+
+        label_map = {1: "Survived", 0: "Not Survived"}
+        colors    = {1: "steelblue", 0: "tomato"}
+
+        plt.figure(figsize=(8, 6))
+
+        for label in [0, 1]:
+            mask = predictions == label
+            plt.scatter(
+                X_pca[mask, 0],
+                X_pca[mask, 1],
+                c=colors[label],
+                label=label_map[label],
+                alpha=0.6,
+                edgecolors='white',
+                linewidths=0.5
+            )
+
+        plt.title(title)
+        plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}% variance)")
+        plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}% variance)")
+        plt.legend()
+        plt.tight_layout()
+        plt.savefig(save_path, dpi=150)
+        print(f"PCA plot saved to: {save_path}")
 
 if __name__ == "__main__":
     """
@@ -82,7 +123,7 @@ if __name__ == "__main__":
             "Fare"
         ],
         # category_cols = [
-        #     "Sex", "Cabin", "Embarked"
+        #     "Sex", "Embarked"
         # ]
     )
     titianic_testing_config = ColumnConfig(
@@ -93,7 +134,7 @@ if __name__ == "__main__":
             "Fare"
         ],
         # category_cols = [
-        #     "Sex", "Cabin", "Embarked"
+        #     "Sex", "Embarked"
         # ]
     )
 
@@ -129,7 +170,7 @@ if __name__ == "__main__":
     except FileNotFoundError:
         print("Model not found. Please train the model first.")
 
-    test_df = pd.read_csv("titanic/test.csv")
+    test_df = pd.read_csv("titanic/test_cleaned.csv")
     cleaned_test_df = titianic_testing_cleaner.clean_data(data = test_df)
 
     predictions = model.predict(cleaned_test_df)
@@ -159,6 +200,43 @@ if __name__ == "__main__":
 
     print("Correct Rate:", score)
 
+    # ==================== PCA Visualization ====================
+    pca = PCA(n_components=2)
+
+    # Use the test features that were predicted
+    X_pca = pca.fit_transform(cleaned_test_df)
+
+    # Map numeric predictions to labels
+    label_map = {1: "Survived", 0: "Not Survived"}
+    colors = {1: "steelblue", 0: "tomato"}
+
+    plt.figure(figsize=(8, 6))
+
+    for label in [0, 1]:
+        mask = predictions == label
+        plt.scatter(
+            X_pca[mask, 0],
+            X_pca[mask, 1],
+            c=colors[label],
+            label=label_map[label],
+            alpha=0.6,
+            edgecolors='white',
+            linewidths=0.5
+        )
+
+    plt.title("PCA - XGBoost Predicted Classification (Test Set)")
+    plt.xlabel(f"PC1 ({pca.explained_variance_ratio_[0]*100:.1f}% variance)")
+    plt.ylabel(f"PC2 ({pca.explained_variance_ratio_[1]*100:.1f}% variance)")
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig("titanic/pca_visualization_randomForest.png", dpi=150)
+
+    rfmodel._visualize_pca(
+        X = cleaned_test_df, 
+        predictions = predictions,
+        save_path = "titanic/pca_visualization_randomForest.png",
+        title = "PCA - Random Forest Predicted Classification (Test Set)"
+    )
 
 # class RandomForestModel_2:
 #     """
